@@ -9,11 +9,12 @@ const db = require('./db/connection');
 db.connect((err) => {
     if (err) throw err;
 
+    //after connection run your main funtion 
     trackEmp()
 })
 //query functions 
-const deparray = ['Store 192']
-// const { } = require();
+
+
 
 function trackEmp() {
     console.log(`
@@ -127,69 +128,72 @@ function addDep() {
 
 //! add demp role function 
 function addEmpRole() {
-    let activeDeps = []
     db.query(`SELECT * FROM department`, (err, rows) => {
+        // we want access to the information in this table so we will run inquirer in this call back function 
         if (err) throw err;
-        for (i = 0; i < rows.length; i++) {
-            activeDeps.push(rows[i].dep_name)
-        }
-    });
-
-    // console.log(activeDeps);
-    inquirer
-        .prompt([
-            {
-                type: "input",
-                message: "What is the title of the role you want to add?",
-                name: "title",
-                validate: nameInput => {
-                    if (nameInput) {
-                        return true;
-                    } else {
-                        console.log('You must Answer!!!');
-                        return false;
+        const activeDeps = rows.map(x => x.dep_name)
+        inquirer
+            .prompt([
+                {
+                    type: "input",
+                    message: "What is the title of the role you want to add?",
+                    name: "title",
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('You must Answer!!!');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: "input",
+                    message: "What is the salary of this role?",
+                    name: "salary",
+                    validate: nameInput => {
+                        if (nameInput) {
+                            return true;
+                        } else {
+                            console.log('You must Answer!!!');
+                            return false;
+                        }
+                    }
+                },
+                {
+                    type: "list",
+                    message: "What depatment is your role in?",
+                    name: "department",
+                    choices: activeDeps
+                }
+            ])
+            .then(answers => {
+                // grab department and us that to return the id in the same row
+                const department = answers.department;
+                let depId;
+                // FOR/OF LOOP: loops through the values of an iterable array 
+                for(const row of rows){
+                    if(row.dep_name === department){
+                        depId = row.id;
                     }
                 }
-            },
-            {
-                type: "input",
-                message: "What is the salary of this role?",
-                name: "salaryy",
-                validate: nameInput => {
-                    if (nameInput) {
-                        return true;
-                    } else {
-                        console.log('You must Answer!!!');
-                        return false;
-                    }
-                }
-            },
-            {
-                type: "list",
-                message: "What depatment is your role in?",
-                name: "department",
-                choices: activeDeps
-            }
+                
+                //answers.salary is a sting we need to turn it into a number
+                const salary = parseInt(answers.salary) 
+                
+                const sql = `INSERT INTO emp_role (title, salary, department_id) VALUES (?,?,?);`
+                const params = [answers.title, salary, depId]
 
-        ])
-        .then(answers => {
-            const sql = `SELECT id FROM department WHERE dep_name = ?;`
-            param = answers.department;
-            let deb_id = 1; //!this is a problem it is not asyc how do we fix it 
-            db.query(sql, param, (err, rows) => {
-                if (err) throw err;
-                console.log(rows[0].id)
-                deb_id = deb_id + rows[0].id;
+                db.query(sql, params, (err, rows) => {
+                    if (err) throw err;
+                    console.log('Success');
+                    trackEmp();
+                })
             });
 
 
-            const sql2 = `INSERT INTO emp_role (title, salary, department_id) VALUES (?,?,?);`
-            const params = [answers.title, answers.salary, deb_id]
+    });
 
-            db.query(sql2, params, (err, rows) => {
-                if (err) throw err;
-                console.log('Success');
-                trackEmp();
-            })
-        });
+
+
 }
