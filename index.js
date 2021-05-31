@@ -34,7 +34,7 @@ function trackEmp() {
                     break;
 
                 case 'View all roles':
-                    let role = 'emp_role'
+                    const role = 'emp_role'
                     viewFunction(role)
                     break;
 
@@ -56,11 +56,15 @@ function trackEmp() {
                     break;
 
                 case 'Update an employee role':
-                    console.log('hi')
+                    let dataType = 'emp_role';
+                    let dataColum = 'role_id'
+                    updateEmpData(dataType, dataColum)
                     break;
 
                 case 'Update employee manager':
-                    console.log('hi')
+                    let dataType2 = 'employee'
+                    let dataColum2 = 'manager_id'
+                    updateEmpData(dataType2, dataColum2)
                     break;
 
                 case 'View employees by manager':
@@ -235,11 +239,11 @@ function addEmp() {
                     choices: activeRoles
                 }
             ]).then(answers => {
-                const role = answers.role;
+                const empRole = answers.role;
                 let roleId;
                 // FOR/OF LOOP: loops through the values of an iterable array 
                 for (const row of rows) {
-                    if (row.title === role) {
+                    if (row.title === empRole) {
                         roleId = row.id;
                     }
                 }
@@ -273,7 +277,7 @@ function addEmp() {
 
                                 const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?);`
                                 const params = [answers.firstName, answers.lastName, roleId, managerID]
-                                
+
                                 db.query(sql, params, (err3, rows3) => {
                                     if (err3) throw err3;
                                     console.log('Success');
@@ -282,5 +286,75 @@ function addEmp() {
                             });
                 });
             });
+    });
+}
+
+//! update function
+function updateEmpData(dataType, dataColum) {
+    db.query(`SELECT * FROM employee`, (err, rows) => {
+        if (err) throw err;
+        const activeEmps = rows.map(x => x.first_name);
+
+        inquirer
+            .prompt(
+                {
+                    type: "list",
+                    message: "What employee would you like to update?",
+                    name: "employee",
+                    choices: activeEmps,
+                }).then(answer => {
+
+                    emp = answer.employee
+                    let empId
+                    for (const row of rows) {
+                        if (row.first_name === emp) {
+                            empId = row.id;
+                        }
+                    }
+
+                    db.query(`SELECT * FROM ${dataType}`, (err2, rows2) => {
+                        if (err2) throw err2;
+                        
+                        let activeList;
+                        if (dataType === 'emp_role') {
+                            activeList = rows2.map(x => x.title);
+                        } else if (dataType === 'employee'){
+                            activeList = rows2.map(x => x.first_name);
+                        }
+
+                        inquirer
+                            .prompt(
+                                {
+                                    type: "list",
+                                    message: "What role/manager are we updating for this employee?",
+                                    name: "newData",
+                                    choices: activeList,
+                                }).then(answer2 => {
+
+                                    newData = answer2.newData
+                                    let newDataId
+                                    for (const row2 of rows2) {
+                                        if (dataType === 'emp_role') {
+                                            if (row2.title === newData) {
+                                                newDataId = row2.id;
+                                            }
+                                        } else if (dataType === 'employee'){
+                                            if (row2.first_name === newData) {
+                                                newDataId = row2.id;
+                                            }
+                                        }
+                                    }
+                                    console.log(dataType, dataColum, newDataId, empId)
+
+                                    db.query(`UPDATE employee SET ${dataColum} = ${newDataId}  WHERE id = ${empId}`, (err3, rows3) => {
+                                        if (err3) throw err3
+                                        console.log('Success')
+                                        trackEmp();
+                                    });
+
+                                })
+
+                    });
+                })
     });
 }
