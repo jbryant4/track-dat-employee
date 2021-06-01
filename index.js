@@ -91,6 +91,10 @@ function trackEmp() {
                     const emp4 = 'employee'
                     deleteData(emp4)
                     break;
+
+                case 'View the total utilized budget':
+                    totalBudget()
+                    break;
             }
         });
 };
@@ -458,3 +462,28 @@ function deleteData(data) {
                 });
     })
 };
+
+//! total budget
+function totalBudget() {
+    const sql = `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS employee, emp_role.title, emp_role.salary, department.dep_name AS department, CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+    FROM employee
+    LEFT JOIN emp_role 
+    ON employee.role_id = emp_role.id
+    LEFT JOIN department
+    ON emp_role.department_id = department.id
+    LEFT JOIN employee manager 
+    ON manager.id = employee.manager_id;`
+
+    db.query(sql, (err, rows) => {
+        if (err) throw err;
+
+        activeList = rows.map(x => parseInt(x.salary));
+
+        let salary = 0;
+        for (i = 0;i < activeList.length;i++){
+            salary += activeList[i]
+        }
+        console.log(`Total Utilized Budget: ` + salary)
+        trackEmp();
+    });
+}
