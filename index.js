@@ -68,23 +68,28 @@ function trackEmp() {
                     break;
 
                 case 'View employees by manager':
-                    console.log('hi')
+                    const manager = 'manager'
+                    viewBy(manager)
                     break;
 
                 case 'View employees by department':
-                    console.log('hi')
+                    const dep1 = 'department';
+                    viewBy(dep1)
                     break;
 
                 case 'Delete departments':
-                    console.log('hi')
+                    const dep2 = 'department';
+                    deleteData(dep2)
                     break;
 
                 case 'Delete roles':
-                    console.log('hi')
+                    const roles = 'emp_role'
+                    deleteData(roles);
                     break;
 
                 case 'Delete employees':
-                    console.log('hi')
+                    const emp4 = 'employee'
+                    deleteData(emp4)
                     break;
             }
         });
@@ -127,7 +132,7 @@ function addDep() {
                 trackEmp();
             })
         })
-}
+};
 
 
 //! add emp role function 
@@ -195,7 +200,7 @@ function addEmpRole() {
                 })
             });
     });
-}
+};
 
 
 //! add an emp
@@ -287,7 +292,7 @@ function addEmp() {
                 });
             });
     });
-}
+};
 
 //! update function
 function updateEmpData(dataType, dataColum) {
@@ -314,11 +319,11 @@ function updateEmpData(dataType, dataColum) {
 
                     db.query(`SELECT * FROM ${dataType}`, (err2, rows2) => {
                         if (err2) throw err2;
-                        
+
                         let activeList;
                         if (dataType === 'emp_role') {
                             activeList = rows2.map(x => x.title);
-                        } else if (dataType === 'employee'){
+                        } else if (dataType === 'employee') {
                             activeList = rows2.map(x => x.first_name);
                         }
 
@@ -338,13 +343,12 @@ function updateEmpData(dataType, dataColum) {
                                             if (row2.title === newData) {
                                                 newDataId = row2.id;
                                             }
-                                        } else if (dataType === 'employee'){
+                                        } else if (dataType === 'employee') {
                                             if (row2.first_name === newData) {
                                                 newDataId = row2.id;
                                             }
                                         }
                                     }
-                                    console.log(dataType, dataColum, newDataId, empId)
 
                                     db.query(`UPDATE employee SET ${dataColum} = ${newDataId}  WHERE id = ${empId}`, (err3, rows3) => {
                                         if (err3) throw err3
@@ -357,4 +361,100 @@ function updateEmpData(dataType, dataColum) {
                     });
                 })
     });
-}
+};
+
+//! view by function
+function viewBy(data) {
+
+    const sql = `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS employee, emp_role.title, emp_role.salary, department.dep_name AS department, CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+    FROM employee
+    LEFT JOIN emp_role 
+    ON employee.role_id = emp_role.id
+    LEFT JOIN department
+    ON emp_role.department_id = department.id
+    LEFT JOIN employee manager 
+    ON manager.id = employee.manager_id;`
+
+    db.query(sql, (err, rows) => {
+        if (err) throw err;
+
+        let activeList;
+        if (data === 'manager') {
+            activeList = rows.map(x => x.employee);
+        } else if (data === 'department') {
+            activeList = rows.map(x => x.department);
+        }
+
+        inquirer
+            .prompt(
+                {
+                    type: "list",
+                    message: "What manager are you loooking for?",
+                    name: "filter",
+                    choices: activeList,
+                }).then(answer => {
+
+                    const cloneArray = rows
+                    let dataList;
+                    if (data === 'manager') {
+                        dataList = cloneArray.filter(x => x.manager === answer.filter)
+                    } else if (data === 'department') {
+                        dataList = cloneArray.filter(x => x.department === answer.filter)
+                    };
+                    console.table(dataList);
+                    trackEmp();
+                })
+    })
+};
+
+
+//! delete function 
+function deleteData(data) {
+    db.query(`SELECT * FROM ${data}`, (err, rows) => {
+        if (err) throw err;
+
+        let activeList;
+        if (data === 'department') {
+            activeList = rows.map(x => x.dep_name);
+        } else if (data === 'emp_role') {
+            activeList = rows.map(x => x.title);
+        } else if (data === 'employee') {
+            activeList = rows.map(x => x.first_name);
+        }
+
+        inquirer
+            .prompt(
+                {
+                    type: "list",
+                    message: `What ${data} are you trying to delete?`,
+                    name: "delete",
+                    choices: activeList,
+                }).then(answer => {
+
+                    let deleteDataId;
+                    for (const row of rows) {
+                        if (data === 'emp_role') {
+                            if (row.title === answer.delete) {
+                                deleteDataId = row.id;
+                            }
+                        } else if (data === 'employee') {
+                            if (row.first_name === answer.delete) {
+                                deleteDataId = row.id;
+                            }
+                        } else if (data === 'department') {
+                            if (row.dep_name === answer.delete) {
+                                deleteDataId = row.id;
+                            }
+                        }
+                    }
+
+                    sql = `DELETE FROM ${data} WHERE id = ${deleteDataId}`
+                    db.query(sql, (err1, rows1) => {
+                        if (err1) throw err1;
+
+                        console.log('Success');
+                        trackEmp();
+                    })
+                });
+    })
+};
