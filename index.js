@@ -493,7 +493,7 @@ function totalBudget() {
         console.log(`
         ___________________________________
 
-        Total Utilized Budget:  + ${salary}
+        Total Utilized Budget:   ${salary}
         
         +++++++++++++++++++++++++++++++++++`)
         
