@@ -14,6 +14,11 @@ db.connect((err) => {
 })
 //query functions 
 
+//global variables
+const dep = 'department';
+const role = 'emp_role';
+const emp = 'employee'
+
 
 
 function trackEmp() {
@@ -29,12 +34,10 @@ function trackEmp() {
         .prompt(mainMenu).then(answer => {
             switch (answer.userChoice) {
                 case 'View all departments':
-                    const dep = 'department'
                     viewFunction(dep)
                     break;
 
                 case 'View all roles':
-                    const role = 'emp_role'
                     viewFunction(role)
                     break;
 
@@ -56,40 +59,34 @@ function trackEmp() {
                     break;
 
                 case 'Update an employee role':
-                    let dataType = 'emp_role';
                     let dataColum = 'role_id'
-                    updateEmpData(dataType, dataColum)
+                    updateEmpData(role, dataColum);
                     break;
 
                 case 'Update employee manager':
-                    let dataType2 = 'employee'
                     let dataColum2 = 'manager_id'
-                    updateEmpData(dataType2, dataColum2)
+                    updateEmpData(emp, dataColum2);
                     break;
 
                 case 'View employees by manager':
                     const manager = 'manager'
-                    viewBy(manager)
+                    viewBy(manager);
                     break;
 
                 case 'View employees by department':
-                    const dep1 = 'department';
-                    viewBy(dep1)
+                    viewBy(dep)
                     break;
 
                 case 'Delete departments':
-                    const dep2 = 'department';
-                    deleteData(dep2)
+                    deleteData(dep);
                     break;
 
                 case 'Delete roles':
-                    const roles = 'emp_role'
-                    deleteData(roles);
+                    deleteData(role);
                     break;
 
                 case 'Delete employees':
-                    const emp4 = 'employee'
-                    deleteData(emp4)
+                    deleteData(emp)
                     break;
 
                 case 'View the total utilized budget':
@@ -101,8 +98,20 @@ function trackEmp() {
 
 //! view function 
 function viewFunction(view) {
-    const sql = `SELECT * FROM ${view};`;
-    // console.log(sql)
+    let sql;
+    if(view === 'employee'){
+        sql = `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS employee, emp_role.title, emp_role.salary, department.dep_name AS department, CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+        FROM employee
+        LEFT JOIN emp_role 
+        ON employee.role_id = emp_role.id
+        LEFT JOIN department
+        ON emp_role.department_id = department.id
+        LEFT JOIN employee manager 
+        ON manager.id = employee.manager_id;`
+    } else {
+        sql = `SELECT * FROM ${view};`;
+    }
+    
     db.query(sql, (err, rows) => {
         if (err) throw err
         console.table(rows)
@@ -137,7 +146,6 @@ function addDep() {
             })
         })
 };
-
 
 //! add emp role function 
 function addEmpRole() {
@@ -205,7 +213,6 @@ function addEmpRole() {
             });
     });
 };
-
 
 //! add an emp
 function addEmp() {
@@ -483,7 +490,13 @@ function totalBudget() {
         for (i = 0;i < activeList.length;i++){
             salary += activeList[i]
         }
-        console.log(`Total Utilized Budget: ` + salary)
+        console.log(`
+        ___________________________________
+
+        Total Utilized Budget:   ${salary}
+        
+        +++++++++++++++++++++++++++++++++++`)
+        
         trackEmp();
     });
 }
