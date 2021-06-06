@@ -42,7 +42,6 @@ function trackEmp() {
                     break;
 
                 case 'View all employees':
-                    const emp = 'employee'
                     viewFunction(emp)
                     break;
 
