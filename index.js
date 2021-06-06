@@ -399,7 +399,7 @@ function viewBy(data) {
             .prompt(
                 {
                     type: "list",
-                    message: "What manager are you loooking for?",
+                    message: `What ${data} are you looking for?`,
                     name: "filter",
                     choices: activeList,
                 }).then(answer => {
