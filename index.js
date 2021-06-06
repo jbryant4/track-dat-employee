@@ -320,10 +320,10 @@ function updateEmpData(dataType, dataColum) {
                     choices: activeEmps,
                 }).then(answer => {
 
-                    emp = answer.employee
+                    empName = answer.employee
                     let empId
                     for (const row of rows) {
-                        if (row.first_name === emp) {
+                        if (row.first_name === empName) {
                             empId = row.id;
                         }
                     }
